@@ -11,7 +11,7 @@ Agents running overnight can spend hundreds of dollars before anyone notices. Co
 ## Quick Start
 
 ```bash
-pip install agent-wallet
+pip install sr-agent-wallet
 ```
 
 ```python

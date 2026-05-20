@@ -14,6 +14,8 @@ import logging
 import os
 from typing import Any
 
+from agent_wallet.alerts.base import AlertBase
+from agent_wallet.killswitch.base import KillSwitchBase
 from agent_wallet.ledger import Ledger
 from agent_wallet.policy import (
     AlertConfig,
@@ -158,7 +160,7 @@ class AgentWallet:
         self.shutdown()
 
 
-def _build_alerts(config: str | AlertConfig | None) -> list:  # type: ignore[type-arg]
+def _build_alerts(config: str | AlertConfig | None) -> list[AlertBase]:
     """Build alert instances from config."""
     if config is None:
         return []
@@ -167,7 +169,7 @@ def _build_alerts(config: str | AlertConfig | None) -> list:  # type: ignore[typ
         # Simple string like "telegram"
         config = AlertConfig(channels=[config])
 
-    instances = []
+    instances: list[AlertBase] = []
 
     for channel in config.channels:
         if channel == "telegram":
@@ -207,7 +209,7 @@ def _build_alerts(config: str | AlertConfig | None) -> list:  # type: ignore[typ
 def _build_kill_switch(
     config: str | KillSwitchConfig | None,
     ledger: Ledger,
-) -> Any:
+) -> KillSwitchBase | None:
     """Build a kill switch instance from config."""
     if config is None:
         return None

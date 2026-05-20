@@ -77,7 +77,7 @@ class WrappedGoogle:
         self._client = client
         self._wallet = wallet
 
-    def GenerativeModel(self, model_name: str, **kwargs: Any) -> WrappedGenerativeModel:
+    def GenerativeModel(self, model_name: str, **kwargs: Any) -> WrappedGenerativeModel:  # noqa: N802
         """Create a wrapped GenerativeModel with budget enforcement."""
         original = self._client.GenerativeModel(model_name, **kwargs)
         return WrappedGenerativeModel(original, self._wallet, model_name)

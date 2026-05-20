@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agent-wallet"
+name = "sr-agent-wallet"
 version = "0.1.0"
 description = "Drop-in middleware that gives AI agents hard spending limits, token budgets, circuit breakers, and real-time kill switches."
 readme = "README.md"

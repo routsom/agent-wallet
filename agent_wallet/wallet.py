@@ -9,14 +9,13 @@ This module is synchronous by design — async wrappers live in interceptors.
 from __future__ import annotations
 
 import logging
-import os
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from agent_wallet.ledger import Ledger
-from agent_wallet.policy import BudgetPolicy, BudgetPeriod, AutoDowngradeStep
+from agent_wallet.policy import BudgetPeriod, BudgetPolicy
 
 if TYPE_CHECKING:
     from agent_wallet.alerts.base import AlertBase
@@ -97,7 +96,7 @@ class Wallet:
         if self.ledger.is_paused(self.wallet_id):
             raise WalletPausedError(self.name)
 
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
 
         # Check each budget period
         for period in self.policy.periods:
@@ -127,7 +126,7 @@ class Wallet:
 
         Used by auto-downgrade to decide which model to use.
         """
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
         max_pct = 0.0
 
         for period in self.policy.periods:
@@ -215,7 +214,7 @@ class Wallet:
         self, now: datetime | None = None
     ) -> dict[str, Any]:
         """Get the period with the highest utilisation for alert reporting."""
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
         best: dict[str, Any] = {"spent": 0.0, "limit": 0.0, "period_type": "unknown", "pct": 0.0}
 
         for period in self.policy.periods:

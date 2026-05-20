@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -15,8 +13,8 @@ console = Console()
 
 
 def status(
-    wallet: Optional[str] = typer.Option(None, "--wallet", "-w", help="Wallet name"),
-    db: Optional[str] = typer.Option(None, "--db", help="Database path"),
+    wallet: str | None = typer.Option(None, "--wallet", "-w", help="Wallet name"),
+    db: str | None = typer.Option(None, "--db", help="Database path"),
 ) -> None:
     """Show today's spend, budget remaining, and paused status."""
     ledger = Ledger(db_path=db)

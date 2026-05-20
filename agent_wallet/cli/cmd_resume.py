@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 from rich.console import Console
 
@@ -14,7 +12,7 @@ console = Console()
 
 def resume(
     wallet: str = typer.Argument(..., help="Wallet name to resume"),
-    db: Optional[str] = typer.Option(None, "--db", help="Database path"),
+    db: str | None = typer.Option(None, "--db", help="Database path"),
 ) -> None:
     """Resume a paused wallet."""
     ledger = Ledger(db_path=db)

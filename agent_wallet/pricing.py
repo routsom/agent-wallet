@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
+from typing import Any, cast
 
 import yaml
 
@@ -19,7 +20,7 @@ _BUNDLED_PRICING = Path(__file__).parent / "pricing.yaml"
 
 
 @lru_cache(maxsize=1)
-def _load_pricing() -> dict:  # type: ignore[type-arg]
+def _load_pricing() -> dict[str, Any]:
     """Load and cache the pricing manifest."""
     pricing_path = os.environ.get("AGENT_WALLET_PRICING", str(_BUNDLED_PRICING))
     path = Path(pricing_path)
@@ -31,7 +32,10 @@ def _load_pricing() -> dict:  # type: ignore[type-arg]
     with open(path) as f:
         data = yaml.safe_load(f)
 
-    return data.get("providers", {})
+    if not isinstance(data, dict):
+        return {}
+
+    return cast(dict[str, Any], data.get("providers", {}))
 
 
 def calculate_cost(
@@ -67,8 +71,8 @@ def calculate_cost(
         )
         return 0.0
 
-    input_cost = (input_tokens / 1_000_000) * model_pricing.get("input_per_1m", 0.0)
-    output_cost = (output_tokens / 1_000_000) * model_pricing.get("output_per_1m", 0.0)
+    input_cost = (input_tokens / 1_000_000) * float(model_pricing.get("input_per_1m", 0.0))
+    output_cost = (output_tokens / 1_000_000) * float(model_pricing.get("output_per_1m", 0.0))
 
     return round(input_cost + output_cost, 8)
 

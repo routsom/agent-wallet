@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any
 from urllib import request as urllib_request
 from urllib.error import URLError
 
@@ -36,7 +35,7 @@ class TelegramKillSwitch(KillSwitchBase):
         super().__init__(
             command=command,
             poll_interval=poll_interval,
-            ledger=ledger,  # type: ignore[arg-type]
+            ledger=ledger,
         )
         self._bot_token = bot_token
         self._chat_id = chat_id

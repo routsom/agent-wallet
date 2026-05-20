@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger("agent_wallet.policy")
 
@@ -53,6 +53,7 @@ class KillSwitchConfig:
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
     discord_webhook_url: str | None = None
+    webhook_url: str | None = None
     poll_interval_seconds: int = 5
 
 
@@ -90,7 +91,7 @@ class BudgetPolicy:
 
     def get_period_start(self, period: BudgetPeriod, now: datetime | None = None) -> str:
         """Calculate the ISO-8601 start timestamp for a given budget period."""
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
 
         if period.type == "daily":
             # Reset at the configured UTC hour

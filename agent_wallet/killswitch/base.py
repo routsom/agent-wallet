@@ -11,7 +11,7 @@ import abc
 import logging
 import re
 import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from agent_wallet.ledger import Ledger
@@ -32,7 +32,7 @@ class KillSwitchBase(abc.ABC):
         self,
         command: str,
         poll_interval: int,
-        ledger: Ledger,
+        ledger: Ledger | None,
     ) -> None:
         self._command = command.upper()
         self._poll_interval = poll_interval
@@ -109,6 +109,7 @@ class KillSwitchBase(abc.ABC):
 
     def _handle_stop(self, wallet_name: str) -> None:
         """Pause a wallet by name."""
+        assert self._ledger is not None
         wallet_row = self._ledger.get_wallet_by_name(wallet_name)
         if not wallet_row:
             self.reply(f"❌ Unknown wallet: {wallet_name}")
@@ -144,6 +145,7 @@ class KillSwitchBase(abc.ABC):
 
     def _handle_resume(self, wallet_name: str) -> None:
         """Resume a wallet by name."""
+        assert self._ledger is not None
         wallet_row = self._ledger.get_wallet_by_name(wallet_name)
         if not wallet_row:
             self.reply(f"❌ Unknown wallet: {wallet_name}")
@@ -162,6 +164,7 @@ class KillSwitchBase(abc.ABC):
 
     def _handle_status(self) -> None:
         """Reply with all wallet statuses."""
+        assert self._ledger is not None
         wallets = self._ledger.list_wallets()
         if not wallets:
             self.reply("No wallets found.")

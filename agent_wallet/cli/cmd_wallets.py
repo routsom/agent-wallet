@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -22,7 +20,7 @@ wallets_app = typer.Typer(
 
 @wallets_app.command("list")
 def list_wallets(
-    db: Optional[str] = typer.Option(None, "--db", help="Database path"),
+    db: str | None = typer.Option(None, "--db", help="Database path"),
 ) -> None:
     """List all registered wallets with their policies."""
     ledger = Ledger(db_path=db)
@@ -75,15 +73,17 @@ def list_wallets(
 @wallets_app.command("create")
 def create_wallet(
     name: str = typer.Argument(..., help="Wallet name"),
-    daily: Optional[float] = typer.Option(None, "--daily", help="Daily budget in USD"),
-    weekly: Optional[float] = typer.Option(None, "--weekly", help="Weekly budget in USD"),
-    lifetime: Optional[float] = typer.Option(None, "--lifetime", help="Lifetime budget in USD"),
+    daily: float | None = typer.Option(None, "--daily", help="Daily budget in USD"),
+    weekly: float | None = typer.Option(None, "--weekly", help="Weekly budget in USD"),
+    lifetime: float | None = typer.Option(None, "--lifetime", help="Lifetime budget in USD"),
     fail_mode: str = typer.Option("pause", "--fail-mode", help="pause|error|downgrade"),
-    db: Optional[str] = typer.Option(None, "--db", help="Database path"),
+    db: str | None = typer.Option(None, "--db", help="Database path"),
 ) -> None:
     """Create a new named wallet."""
     if not daily and not weekly and not lifetime:
-        console.print("[red]At least one budget limit is required (--daily, --weekly, or --lifetime).[/red]")
+        console.print(
+            "[red]At least one budget limit is required (--daily, --weekly, or --lifetime).[/red]"
+        )
         raise typer.Exit(1)
 
     ledger = Ledger(db_path=db)

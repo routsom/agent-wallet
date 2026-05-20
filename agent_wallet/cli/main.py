@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import typer
 
-from agent_wallet.cli.cmd_status import status
+from agent_wallet.cli.cmd_history import history
 from agent_wallet.cli.cmd_pause import pause
 from agent_wallet.cli.cmd_resume import resume
-from agent_wallet.cli.cmd_history import history
+from agent_wallet.cli.cmd_status import status
 from agent_wallet.cli.cmd_wallets import wallets_app
 
 app = typer.Typer(

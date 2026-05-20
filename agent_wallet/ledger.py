@@ -11,9 +11,10 @@ import logging
 import os
 import sqlite3
 import uuid
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger("agent_wallet.ledger")
 
@@ -68,7 +69,7 @@ class SpendRecord:
     output_tokens: int
     cost_usd: float
     session_id: str | None = None
-    metadata: dict = field(default_factory=dict)  # type: ignore[type-arg]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -114,7 +115,7 @@ class Ledger:
     ) -> str:
         """Create a new wallet and return its ID."""
         wid = wallet_id or str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         self._conn.execute("BEGIN IMMEDIATE")
         try:
             self._conn.execute(
@@ -127,7 +128,7 @@ class Ledger:
             raise
         return wid
 
-    def get_wallet(self, wallet_id: str) -> dict | None:  # type: ignore[type-arg]
+    def get_wallet(self, wallet_id: str) -> dict[str, Any] | None:
         """Return wallet row as dict or None."""
         cur = self._conn.execute(
             "SELECT id, name, created_at, paused, policy FROM wallets WHERE id = ?",
@@ -144,7 +145,7 @@ class Ledger:
             "policy": row[4],
         }
 
-    def get_wallet_by_name(self, name: str) -> dict | None:  # type: ignore[type-arg]
+    def get_wallet_by_name(self, name: str) -> dict[str, Any] | None:
         """Return wallet row by name."""
         cur = self._conn.execute(
             "SELECT id, name, created_at, paused, policy FROM wallets WHERE name = ?",
@@ -161,7 +162,7 @@ class Ledger:
             "policy": row[4],
         }
 
-    def list_wallets(self) -> list[dict]:  # type: ignore[type-arg]
+    def list_wallets(self) -> list[dict[str, Any]]:
         """Return all wallets."""
         cur = self._conn.execute(
             "SELECT id, name, created_at, paused, policy FROM wallets ORDER BY created_at"
@@ -222,13 +223,13 @@ class Ledger:
         output_tokens: int,
         cost_usd: float,
         session_id: str | None = None,
-        metadata: dict | None = None,  # type: ignore[type-arg]
+        metadata: dict[str, Any] | None = None,
     ) -> SpendRecord:
         """Write a SpendRecord atomically and return it."""
         rec = SpendRecord(
             id=str(uuid.uuid4()),
             wallet_id=wallet_id,
-            recorded_at=datetime.now(timezone.utc).isoformat(),
+            recorded_at=datetime.now(UTC).isoformat(),
             provider=provider,
             model=model,
             input_tokens=input_tokens,
@@ -304,7 +305,7 @@ class Ledger:
     ) -> list[SpendRecord]:
         """Query spend records with optional filtering."""
         query = "SELECT * FROM spend_records WHERE 1=1"
-        params: list = []  # type: ignore[type-arg]
+        params: list[Any] = []
 
         if wallet_id:
             query += " AND wallet_id = ?"
@@ -348,7 +349,7 @@ class Ledger:
         evt = KillSwitchEvent(
             id=str(uuid.uuid4()),
             wallet_id=wallet_id,
-            triggered_at=datetime.now(timezone.utc).isoformat(),
+            triggered_at=datetime.now(UTC).isoformat(),
             platform=platform,
             command=command,
             action=action,
