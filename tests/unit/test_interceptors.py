@@ -114,3 +114,128 @@ class TestOpenAIInterceptor:
         with pytest.raises(BudgetExceededError):
             wrapped.chat.completions.create(model="gpt-4o", messages=[])
         mock_client.chat.completions.create.assert_not_called()
+
+
+class TestGoogleInterceptor:
+    def test_records_spend_with_usage_metadata(self, wallet, ledger):
+        from agent_wallet.interceptors.google import WrappedGenerativeModel
+
+        mock_model = MagicMock()
+        usage = MagicMock()
+        usage.prompt_token_count = 800
+        usage.candidates_token_count = 400
+        mock_response = MagicMock()
+        mock_response.usage_metadata = usage
+        mock_model.generate_content.return_value = mock_response
+
+        wrapped_model = WrappedGenerativeModel(mock_model, wallet, "gemini-2.0-flash")
+        resp = wrapped_model.generate_content("Hello")
+
+        assert resp == mock_response
+        records = ledger.get_records(wallet_id=wallet.wallet_id)
+        assert len(records) == 1
+        assert records[0].provider == "google"
+
+    def test_records_spend_without_usage_metadata(self, wallet, ledger):
+        from agent_wallet.interceptors.google import WrappedGenerativeModel
+
+        mock_model = MagicMock()
+        mock_response = MagicMock()
+        mock_response.usage_metadata = None
+        mock_model.generate_content.return_value = mock_response
+
+        wrapped_model = WrappedGenerativeModel(mock_model, wallet, "gemini-2.0-flash")
+        wrapped_model.generate_content("Hello")
+
+        records = ledger.get_records(wallet_id=wallet.wallet_id)
+        assert len(records) == 0
+
+    def test_blocks_when_budget_exceeded(self, wallet, ledger):
+        from agent_wallet.interceptors.google import WrappedGenerativeModel
+
+        ledger.record(wallet.wallet_id, "google", "m", 0, 0, 10.01)
+        mock_model = MagicMock()
+        wrapped_model = WrappedGenerativeModel(mock_model, wallet, "gemini-2.0-flash")
+
+        with pytest.raises(BudgetExceededError):
+            wrapped_model.generate_content("Hello")
+        mock_model.generate_content.assert_not_called()
+
+    def test_wrapped_google_creates_model(self, wallet):
+        from agent_wallet.interceptors.google import WrappedGenerativeModel, WrappedGoogle
+
+        mock_client = MagicMock()
+        wrapped = WrappedGoogle(mock_client, wallet)
+        model = wrapped.GenerativeModel("gemini-2.0-flash")
+        assert isinstance(model, WrappedGenerativeModel)
+        mock_client.GenerativeModel.assert_called_once_with("gemini-2.0-flash")
+
+    def test_passthrough_attributes(self, wallet):
+        from agent_wallet.interceptors.google import WrappedGoogle
+
+        mock_client = MagicMock()
+        mock_client.some_attr = "value"
+        wrapped = WrappedGoogle(mock_client, wallet)
+        assert wrapped.some_attr == "value"
+
+
+class TestOllamaInterceptor:
+    def test_chat_with_dict_response(self, wallet, ledger):
+        from agent_wallet.interceptors.ollama import WrappedOllama
+
+        mock_client = MagicMock()
+        mock_client.chat.return_value = {"prompt_eval_count": 500, "eval_count": 200}
+        wrapped = WrappedOllama(mock_client, wallet)
+        resp = wrapped.chat(model="llama3", messages=[])
+
+        assert resp["eval_count"] == 200
+        records = ledger.get_records(wallet_id=wallet.wallet_id)
+        assert len(records) == 1
+        assert records[0].provider == "ollama"
+        assert records[0].input_tokens == 500
+
+    def test_chat_with_attr_response(self, wallet, ledger):
+        from agent_wallet.interceptors.ollama import WrappedOllama
+
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.prompt_eval_count = 300
+        mock_response.eval_count = 150
+        mock_client.chat.return_value = mock_response
+        wrapped = WrappedOllama(mock_client, wallet)
+        wrapped.chat(model="llama3", messages=[])
+
+        records = ledger.get_records(wallet_id=wallet.wallet_id)
+        assert len(records) == 1
+        assert records[0].input_tokens == 300
+
+    def test_generate_with_dict_response(self, wallet, ledger):
+        from agent_wallet.interceptors.ollama import WrappedOllama
+
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"prompt_eval_count": 100, "eval_count": 50}
+        wrapped = WrappedOllama(mock_client, wallet)
+        wrapped.generate(model="llama3", prompt="Hello")
+
+        records = ledger.get_records(wallet_id=wallet.wallet_id)
+        assert len(records) == 1
+        assert records[0].output_tokens == 50
+
+    def test_blocks_when_budget_exceeded(self, wallet, ledger):
+        from agent_wallet.interceptors.ollama import WrappedOllama
+
+        ledger.record(wallet.wallet_id, "ollama", "m", 0, 0, 10.01)
+        mock_client = MagicMock()
+        wrapped = WrappedOllama(mock_client, wallet)
+
+        with pytest.raises(BudgetExceededError):
+            wrapped.chat(model="llama3", messages=[])
+        mock_client.chat.assert_not_called()
+
+    def test_passthrough_attributes(self, wallet):
+        from agent_wallet.interceptors.ollama import WrappedOllama
+
+        mock_client = MagicMock()
+        mock_client.host = "http://localhost:11434"
+        wrapped = WrappedOllama(mock_client, wallet)
+        assert wrapped.host == "http://localhost:11434"
